@@ -5,6 +5,7 @@ on:
     # Publish `master` as Docker `latest` image.
     branches:
       - master
+      - v*
 
     # Publish `v1.2.3` tags as releases.
     tags:
@@ -15,7 +16,7 @@ on:
 
 env:
   REPOSITORY: cyrilix
-  IMAGE_NAME: keycloak-gatekeeper
+  IMAGE_NAME: keycloak
 
 jobs:
   # Run tests.
@@ -70,7 +71,7 @@ jobs:
           IMAGE_ID=$REPOSITORY/$IMAGE_NAME
 
           # Strip git ref prefix from version
-          VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+          VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,' | sed "s/\.x$//" )
 
           # Use Docker `latest` tag convention
           [ "$VERSION" == "master" ] && VERSION=latest

@@ -1,3 +1,3 @@
-# docker-keycloak-gatekeeper
+# docker-keycloak
 
-Multiarch docker images for [keycloak/keycloak-gatekeeper](https://github.com/keycloak/keycloak-gatekeeper)
+Multiarch docker images for [keycloak/keycloak](https://github.com/keycloak/keycloak)
