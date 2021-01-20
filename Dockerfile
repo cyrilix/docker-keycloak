@@ -1,6 +1,6 @@
 FROM openjdk:11-ea-13-jre
 
-ENV KEYCLOAK_VERSION=12.0.1
+ENV KEYCLOAK_VERSION=12.0.2
 ARG POSTGRESQL_JDBC_JAR=postgresql-42.2.11.jar
 
 RUN wget -q -O- https://github.com/keycloak/keycloak/releases/download/${KEYCLOAK_VERSION}/keycloak-${KEYCLOAK_VERSION}.tar.gz | tar zxf - &&\
