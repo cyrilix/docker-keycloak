@@ -1,29 +1,23 @@
-FROM openjdk:11-ea-13-jre
+ARG VERSION=21.0.2
 
-ENV KEYCLOAK_VERSION=13.0.0
-ARG POSTGRESQL_JDBC_JAR=postgresql-42.2.11.jar
+FROM quay.io/keycloak/keycloak:${VERSION} as builder
 
-RUN wget -q -O- https://github.com/keycloak/keycloak/releases/download/${KEYCLOAK_VERSION}/keycloak-${KEYCLOAK_VERSION}.tar.gz | tar zxf - &&\
-    mv keycloak-${KEYCLOAK_VERSION} keycloak
+ENV KC_HEALTH_ENABLED=true
+ENV KC_METRICS_ENABLED=true
+ENV KC_FEATURES=token-exchange
+ENV KC_DB=postgres
+# Install custom providers
+#RUN curl -sL https://github.com/aerogear/keycloak-metrics-spi/releases/download/2.5.3/keycloak-metrics-spi-2.5.3.jar -o /opt/keycloak/providers/keycloak-metrics-spi-2.5.3.jar
+RUN /opt/keycloak/bin/kc.sh build --health-enabled=true --db=postgres --cache=ispn --cache-stack=kubernetes
 
-RUN mkdir -p keycloak/standalone/data && chmod 0777 keycloak/standalone/data
-RUN mkdir -p keycloak/standalone/log && chmod 0777 keycloak/standalone/log
-
-RUN chmod -R 0666  keycloak/standalone/configuration/ && chmod 777 keycloak/standalone/configuration
-RUN chmod 0777 keycloak/standalone/tmp
-RUN chmod 0777 /keycloak/standalone/deployments
-
-RUN mkdir -p /keycloak/modules/system/layers/keycloak/org/postgresql/main/
-RUN wget -q -O /keycloak/modules/system/layers/keycloak/org/postgresql/main/${POSTGRESQL_JDBC_JAR} https://jdbc.postgresql.org/download/${POSTGRESQL_JDBC_JAR}
-RUN echo "<?xml version=\"1.0\" ?>\n<module xmlns=\"urn:jboss:module:1.3\" name=\"org.postgresql\">\n    <resources>\n        <resource-root path=\"${POSTGRESQL_JDBC_JAR}\"/>\n    </resources>\n    <dependencies>\n        <module name=\"javax.api\"/>\n        <module name=\"javax.transaction.api\"/>\n    </dependencies>\n</module>\n" \
-    > /keycloak/modules/system/layers/keycloak/org/postgresql/main/module.xml
-
-VOLUME keycloak/standalone/data
-VOLUME keycloak/standalone/log
-VOLUME keycloak/standalone/configuration
-
-EXPOSE 9990 8080
-USER 1234:1234
-
-
-ENTRYPOINT ["/keycloak/bin/standalone.sh"]
+FROM quay.io/keycloak/keycloak:${VERSION}
+COPY --from=builder /opt/keycloak/ /opt/keycloak/
+WORKDIR /opt/keycloak
+# for demonstration purposes only, please make sure to use proper certificates in production instead
+#RUN keytool -genkeypair -storepass password -storetype PKCS12 -keyalg RSA -keysize 2048 -dname "CN=server" -alias server -ext "SAN:c=DNS:localhost,IP:127.0.0.1" -keystore conf/server.keystore
+# change these values to point to a running postgres instance
+ENV KC_DB_URL=<DBURL>
+ENV KC_DB_USERNAME=<DBUSERNAME>
+ENV KC_DB_PASSWORD=<DBPASSWORD>
+ENV KC_HOSTNAME=localhost
+ENTRYPOINT ["/opt/keycloak/bin/kc.sh", "start"]
