@@ -1,4 +1,4 @@
-ARG VERSION=21.1.1
+ARG VERSION=21.1.2
 
 FROM quay.io/keycloak/keycloak:${VERSION} as builder
 
